@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pong</title>
+    <style>
+      body {
+        background: black;
+        margin: 0;
+        overflow-y: hidden;
+        height: 100vh;
+        font-family: 'ubuntu', sans-serif;
+      }
+      .content {
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+      #scores {
+        font-size: 60px;
+        z-index: 1;
+        color: white;
+        position: absolute;
+        display: flex;
+        align-items: center;
+        top: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      #scores > strong {
+        padding: 20px;
+      }
+
+      #scores > span {
+        display: inline-block;
+      }
+
+      canvas {
+      }
+    </style>
+  </head>
+  <body>
+    <div id="content">
+      <h1 id="scores">
+        <strong>0</strong>
+        <span>-</span>
+        <strong>0</strong>
+      </h1>
+      <canvas> </canvas>
+    </div>
+  </body>
+  <script>
+    const scores = document.getElementById('scores');
+
+    const canvas = document.querySelector('canvas');
+    const c = canvas.getContext('2d');
+
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+
+    class Paddle {
+      constructor({ position }) {
+        this.position = position;
+        this.velocity = {
+          x: 0,
+          y: 0
+        };
+        this.width = 10;
+        this.heigth = 100;
+      }
+
+      draw() {
+        c.fillStyle = 'white';
+        c.fillRect(this.position.x, this.position.y, this.width, this.heigth);
+      }
+
+      update() {
+        this.draw();
+
+        if (
+          (this.position.y < 0 && this.velocity.y < 0) ||
+          (this.position.y + this.heigth > canvas.height && this.velocity.y > 0)
+        ) {
+          return;
+        }
+        this.position.y += this.velocity.y;
+      }
+    }
+
+    class Ball {
+      constructor({ position, speed }) {
+        this.position = position;
+
+        this.speed = speed;
+        const direction = {
+          x: Math.random() - 0.5 > 0 ? -speed : speed,
+          y: Math.random() - 0.5 > 0 ? -speed : speed
+        };
+        this.velocity = {
+          x: direction.x,
+          y: direction.y
+        };
+
+        this.width = 10;
+        this.height = 10;
+      }
+
+      resetBallPosition() {
+        this.position = {
+          x: canvas.width / 2,
+          y: canvas.height / 2
+        };
+        const direction = {
+          x: Math.random() - 0.5 > 0 ? -this.speed : this.speed,
+          y: Math.random() - 0.5 > 0 ? -this.speed : this.speed
+        };
+        this.velocity = {
+          x: direction.x,
+          y: direction.y
+        };
+      }
+
+      draw() {
+        c.fillStyle = 'white';
+        c.fillRect(this.position.x, this.position.y, this.width, this.height);
+      }
+
+      update() {
+        this.draw();
+        const rightSide = this.position.x + this.width + this.velocity.x;
+        const leftSide = this.position.x + this.velocity.x;
+        const topSide = this.position.y + this.velocity.y;
+        const bottomSide = this.position.y + this.width + this.velocity.y;
+
+        // reverse x direction
+        if (
+          (rightSide >= paddle2.position.x &&
+            bottomSide <= paddle2.position.y + paddle2.heigth &&
+            topSide >= paddle2.position.y) ||
+          (leftSide <= paddle1.position.x + paddle1.width &&
+            bottomSide <= paddle1.position.y + paddle1.heigth &&
+            topSide >= paddle1.position.y)
+        ) {
+          this.velocity.x = -this.velocity.x;
+        }
+
+        // reverse y direction
+        if (bottomSide >= canvas.height || topSide <= 0) {
+          this.velocity.y = -this.velocity.y;
+        }
+
+        const [player1, player2] = scores.querySelectorAll('strong');
+
+        //goal
+        if (rightSide >= canvas.width) {
+          const player1Score = +player1.textContent;
+          player1.textContent = player1Score + 1;
+          this.resetBallPosition();
+        }
+
+        if (leftSide <= 0) {
+          const player2Score = +player2.textContent;
+          player2.textContent = player2Score + 1;
+          this.resetBallPosition();
+        }
+
+        this.position.x += this.velocity.x;
+        this.position.y += this.velocity.y;
+      }
+    }
+
+    const paddle1 = new Paddle({
+      position: {
+        x: 10,
+        y: 200
+      }
+    });
+    const paddle2 = new Paddle({
+      position: {
+        x: canvas.width - 10 * 2,
+        y: 200
+      }
+    });
+
+    const ball = new Ball({
+      position: {
+        x: canvas.width / 2,
+        y: canvas.height / 2
+      },
+      speed: 6
+    });
+
+    function anime() {
+      requestAnimationFrame(anime);
+      c.fillStyle = 'black';
+      c.fillRect(0, 0, canvas.width, canvas.height);
+      paddle1.update();
+      paddle2.update();
+
+      ball.update();
+    }
+
+    anime();
+
+    addEventListener('keydown', (event) => {
+      const speed = 6;
+      switch (event.key) {
+        case 's':
+          //go down
+          paddle1.velocity.y = speed;
+          break;
+        case 'w':
+          //go up
+          paddle1.velocity.y = -speed;
+          break;
+        case 'ArrowDown':
+          //go down
+          paddle2.velocity.y = speed;
+          break;
+        case 'ArrowUp':
+          //go up
+          paddle2.velocity.y = -speed;
+          break;
+        default:
+          break;
+      }
+    });
+  </script>
+</html>
